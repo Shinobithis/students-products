@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
 const helmet = require('helmet')
+const rateLimit = require('express-rate-limit')
 const studentsRoute = require("./routes/studentsRoute");
 const usersRoute = require("./routes/userRoutes");
 const productRoute = require("./routes/productsRoutes");
@@ -9,7 +10,6 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss");
 
 const app = express()
-app.use(express.json());
 
 app.use(helmet());
 
@@ -26,12 +26,39 @@ app.use((req,res,next) => {
     next();
 });
 
+app.use(express.json());
+
 app.use((req,res,next) => {
     const { sanitize } = mongoSanitize;
     if (req.body) sanitize(req.body);
     if (req.query) sanitize(req.query);
     if (req.params) sanitize(req.params);
     next()
+});
+
+app.use((req,res,next) => {
+    const sanatize = (obj) => {
+        for (let key in obj) {
+            if (typeof obj[key] === 'string') obj[key] = xss(obj[key]);
+        }
+    };
+    if (req.body) sanatize(req.body);
+    if (req.query) sanatize(req.query);
+    if (req.params) sanatize(req.params);
+    next();
+})
+
+const globallimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "A lot of requests",
+    standardHeaders: true,
+    legacyHeaders: false
+})
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5
 });
 
 mongoose.connect(process.env.MONGO_URI)
