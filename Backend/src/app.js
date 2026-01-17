@@ -9,6 +9,7 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss");
 
 const app = express()
+app.use(express.json());
 
 app.use(helmet());
 
@@ -36,8 +37,6 @@ app.use((req,res,next) => {
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Kolxi howa hadak sir 3lah!'))
     .catch((err) => console.log(err));
-
-app.use(express.json());
 
 app.use('/api/students', studentsRoute);
 app.use('/api/users', usersRoute);
