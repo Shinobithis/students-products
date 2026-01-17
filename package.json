@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "helmet": "^8.1.0"
+    "express-mongo-sanitize": "^2.2.0",
+    "helmet": "^8.1.0",
+    "xss": "^1.0.15"
   }
 }

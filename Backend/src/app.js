@@ -1,16 +1,16 @@
 require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
+const helmet = require('helmet')
 const studentsRoute = require("./routes/studentsRoute");
 const usersRoute = require("./routes/userRoutes");
 const productRoute = require("./routes/productsRoutes");
-
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('Kolxi howa hadak sir 3lah!'))
-    .catch((err) => console.log(err));
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss");
 
 const app = express()
-app.use(express.json());
+
+app.use(helmet());
 
 app.use((req,res,next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,6 +24,20 @@ app.use((req,res,next) => {
     );
     next();
 });
+
+app.use((req,res,next) => {
+    const { sanitize } = mongoSanitize;
+    if (req.body) sanitize(req.body);
+    if (req.query) sanitize(req.query);
+    if (req.params) sanitize(req.params);
+    next()
+});
+
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Kolxi howa hadak sir 3lah!'))
+    .catch((err) => console.log(err));
+
+app.use(express.json());
 
 app.use('/api/students', studentsRoute);
 app.use('/api/users', usersRoute);
